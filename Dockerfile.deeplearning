@@ -1,0 +1,51 @@
+# ==================================================================
+# module list
+# ------------------------------------------------------------------
+# torch         latest (git)
+# ==================================================================
+
+FROM ufoym/deepo:pytorch-py36-cpu
+LABEL maintainer='modai<modai@modai.com>'
+ENV LANG C.UTF-8
+RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
+    PIP_INSTALL="python -m pip --no-cache-dir install --upgrade" && \
+    GIT_CLONE="git clone --depth 10" && \
+
+    rm -rf /var/lib/apt/lists/* \
+           /etc/apt/sources.list.d/cuda.list \
+           /etc/apt/sources.list.d/nvidia-ml.list && \
+
+    apt-get update
+
+# ==================================================================
+# tools
+# ------------------------------------------------------------------
+
+RUN apt update && apt install --assume-yes nfs-common cifs-utils sshpass wget git
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install pqi && pqi use aliyun
+RUN python3 -m pip --no-cache-dir install numpy scipy
+RUN python3 -m pip --no-cache-dir install tensorflow tensorboard
+# RUN python3 -m pip --no-cache-dir install Keras
+RUN python3 -m pip --no-cache-dir install tensorboardx
+RUN python3 -m pip --no-cache-dir install scikit-learn
+RUN python3 -m pip --no-cache-dir install pandas lightgbm
+#RUN python3 -m pip --no-cache-dir install -U torch torchvision
+RUN python3 -m pip --no-cache-dir install nni
+RUN python3 -m pip --no-cache-dir install jupyterlab
+
+ENV PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/root/.local/bin:/usr/bin:/bin:/sbin
+
+WORKDIR /root
+
+# ==================================================================
+# config & cleanup
+# ------------------------------------------------------------------
+RUN ldconfig && \
+    apt-get clean && \
+    apt-get autoremove && \
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/*
+
+EXPOSE 8000
+
+ENTRYPOINT jupyter lab --port 8000 --ip 0.0.0.0 --allow-root --notebook-dir='/root'
